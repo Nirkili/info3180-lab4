@@ -87,6 +87,7 @@ def login():
     return render_template("login.html", form=form)
 
 @app.route("/files")
+@login_required
 def files():
     lst = get_uploaded_images()
     
