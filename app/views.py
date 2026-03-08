@@ -1,6 +1,7 @@
 import os
 from app import app, db, login_manager
-from flask import render_template, request, redirect, url_for, flash, session, abort
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
+import os
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
 from werkzeug.security import check_password_hash
@@ -8,6 +9,15 @@ from app.models import UserProfile
 from app.forms import LoginForm, UploadForm
 
 
+def get_uploaded_images():
+    lst = []
+    rootdir = os.getcwd() 
+    for subdir, dirs, files in os.walk(rootdir + '/uploads'): 
+        for file in files:
+            if file != ".gitkeep":
+                lst.append(file)
+            
+    return lst
 ###
 # Routing for your application.
 ###
@@ -41,6 +51,13 @@ def upload():
         return redirect(url_for('home')) # Update this to redirect the user to a route that displays all uploaded image files
     return render_template('upload.html', form = form)
 
+@app.route("/uploads/<filename>")
+def get_image(filename):
+    
+    uploads = os.path.join(os.getcwd(),app.config['UPLOAD_FOLDER'])
+    if(os.path.exists(os.path.join(uploads, filename))):
+        return send_from_directory(uploads, filename)
+    
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -69,6 +86,12 @@ def login():
             return redirect(url_for("upload"))  # The user should be redirected to the upload form instead
     return render_template("login.html", form=form)
 
+@app.route("/files")
+def files():
+    lst = get_uploaded_images()
+    
+    return render_template("files.html", lst= lst)
+    
 # user_loader callback. This callback is used to reload the user object from
 # the user ID stored in the session
 @login_manager.user_loader
